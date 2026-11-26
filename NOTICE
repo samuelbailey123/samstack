@@ -9,6 +9,8 @@ Adapted whole, each with its LICENSE beside it:
 - writing, from pstack's unslop and technical-writing
 - typescript, from pstack's typescript-best-practices
 - measuring, from pstack's benchmark-checklist and explain-the-number
+- verification-kit, from pstack's create-verification-skill and
+  maintain-verification-skill
 
 Adapted in part, as points rewritten into skills of samstack's own:
 

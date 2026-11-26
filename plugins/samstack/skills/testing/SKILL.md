@@ -44,7 +44,7 @@ Any harness can drive a loop: Playwright, XCUITest, a PTY, curl. What makes it a
 
 **A loop counts only once it has been seen to fail.** Run it against the unfixed code or a deliberate break, and check that it goes red for the reason it names. A step that can't pass reports FAIL with its evidence. Never loosen a step so that it passes.
 
-To build a kit for a shipped app (launch, doctor, drive, cleanup and a feature map), use a verification-kit skill if you have one, or build those five pieces by hand. Before building a loop, read the section for your kind of software in [references/loops-by-kind.md](references/loops-by-kind.md). It covers Mac and iOS apps, CLIs, web apps, services, and scripts and hooks, with a worked example.
+To build a kit for a shipped app (launch, doctor, drive, evidence, cleanup and a feature map), or to audit one that may have drifted, call the Skill tool with "samstack:verification-kit". Before building a loop, read the section for your kind of software in [references/loops-by-kind.md](references/loops-by-kind.md). It covers Mac and iOS apps, CLIs, web apps, services, and scripts and hooks, with a worked example.
 
 ## Verify only what changed
 
