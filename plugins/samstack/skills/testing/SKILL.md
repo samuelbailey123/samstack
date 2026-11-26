@@ -103,7 +103,7 @@ A one-off script nobody depends on owes less: `bash -n`, `shellcheck` or `py_com
 
 - A shipped app keeps a feature map: one file per user-facing feature, saying how to reach it, how to drive it, and what end state proves it works. The main-flow loops come from it.
 - **A review finding needs the command that proves it,** a loop or repro command and its output. A finding nobody ran is dropped. A claim that a change is safe names the one fact it rests on, and runs code to prove it.
-- Model checking (TLA+) earns its cost only where a flow has shipped the same class of bug twice.
+- Model checking (TLA+) earns its cost only where a flow has shipped the same class of bug twice. Call the Skill tool with "samstack:statechart" for it: it checks the model and draws each bug as a path through states.
 - A client's website also gets a Lighthouse pass (accessibility, performance, SEO) before it ships and after a change to its pages, with the scores in the PR.
 
 ## Reproduce before you fix
