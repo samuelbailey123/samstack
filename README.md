@@ -12,6 +12,7 @@ The way of working behind it: a change is proven by running the real thing on ma
 | `scripts/check` | What the pre-push hook runs |
 | `scripts/public-check` | The owner's gate before publishing: no private names in any file or any commit |
 | `LICENSE` | MIT |
+| `NOTICE` | Credit for the adapted skills |
 
 Skills load as `samstack:<name>`, for example `samstack:stability`.
 
@@ -32,4 +33,4 @@ These are one developer's working rules, so some read as opinionated: an agent d
 
 `reframe` and `sharpen` are adapted from [pstack](https://github.com/cursor/plugins) by Lauren Tan (MIT, licence kept beside each skill). The repo layout follows [pstack-claude](https://github.com/michael-denyer/pstack-claude).
 
-MIT licensed: see [LICENSE](LICENSE).
+MIT licensed: see [LICENSE](LICENSE) and [NOTICE](NOTICE).
