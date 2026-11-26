@@ -41,6 +41,11 @@ After 2–3 honest attempts at the same failing thing, stop repeating it. Write 
 
 A large run needs no go-ahead and has no stopping point short of done. Enumerate every item first, work all of them until done equals enumerated, and name any blocked item with its unblocking question while the rest finishes. Length is never a reason to stop, defer or check in.
 
+For a sweep, a migration or a run of similar edits:
+
+- **Build the lever.** Beyond a couple of obvious edits, write the smallest script, codemod or generator that does or proves the job, never a framework. Do the first unit by hand, then prove the tool by rerunning it on that unit, and keep it safe to rerun. A deterministic tool beats fan-out. When you do fan out, write the recipe, the verification contract and the fences as one file the helpers read and cannot edit. The tool in the diff is what a reviewer reruns.
+- **Sequence verifiable units.** Each unit is a bracket: known-good state, one change, the check, then the next unit. Run the per-unit check even when a tool made the edits. Deliver in the order that proves the work: the red loop before the fix, the subtraction before the reshape, the baseline before the treatment, and each commit landing on its own.
+
 ## Lessons
 
 Past mistakes in this area, one line each: [`lessons.md`](lessons.md). Grep it for the tool or symptom in front of you.

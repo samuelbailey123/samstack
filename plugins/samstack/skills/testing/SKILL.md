@@ -11,7 +11,7 @@ Every change is proven by a verification loop, not a test. A loop launches the r
 
 - **Every change gets a loop.** It runs on made-up data, drives only what changed, reuses the change's incremental build, and keeps evidence that review reads.
 - **No new tests of any kind.** No unit, integration, snapshot, UI or end-to-end test, and no new case in an existing test file. A bug fix's proof is a loop that is red before the fix and green after.
-- **Existing tests go area by area, as loops land.** An area's tests are deleted in the PR that lands the loops proving what they proved, never before. A test that asserts nothing goes on sight.
+- **Existing tests go area by area, as loops land.** An area's tests are deleted in the PR that lands the loops proving what they proved, never before. A test that proves nothing goes on sight: one that asserts nothing, or that still passes with the behaviour it names broken (a wrong value, a skipped or doubled effect). One that fails when only the internals change is pinned to the implementation: retire it with its area, never rewrite it.
 - **Core keeps its tests until its CLI loops on a scratch home exist.** Core is auth, permissions, signing, the updater, billing, secrets and crypto, and stored or migrated data. Until then, a core change runs the core tests it touches, and its proof is still a loop.
 - **CI and hooks are not core.** They get loops of their own (see "Loops for hooks and CI").
 - **A past correction becomes architecture, types or a lint, never a test.** See `samstack:code-quality`.

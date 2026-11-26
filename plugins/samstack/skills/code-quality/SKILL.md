@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: "Standards for shipped code: error handling, observability levels, idempotency, turning a correction into a check, and keeping repos lean. Use when writing non-trivial code, adding logging, fixing a mistake that has happened before, or adding, moving or removing files, docs or scripts."
+description: "Standards for shipped code: types and data shape, error handling, observability levels, idempotency, turning a correction into a check, and keeping repos lean. Use when writing non-trivial code, designing types or data structures, adding logging, fixing a mistake that has happened before, or adding, moving or removing files, docs or scripts."
 ---
 
 # Code quality
@@ -12,6 +12,15 @@ description: "Standards for shipped code: error handling, observability levels, 
 **Subtract before you add.** Delete dead paths, one-caller wrappers and adapters with no second implementation before building on top. Leave the code simpler than you found it.
 
 For the vocabulary of *how* to shape a module (depth, seam, adapter, leverage, locality), use a codebase-design skill if you have one.
+
+## Types and shape
+
+- **Make the compiler reject the bad state.** Two values that share a primitive but mean different things get their own types (a brand or newtype). Variants are a tagged union or a state machine, not a boolean beside optional fields. A second boolean that must stay in sync with the first, or an if/else chain that grows by one more branch, says the model is wrong: reach for a map, registry or reducer. Keep boring code where the shape is clear, local and unlikely to grow.
+- **Parse at the boundary, trust inside.** Data crossing in (CLI args, config, environment, network, database rows) goes through one parse that returns the domain type, and nothing inside re-validates it. Derive a type from the schema that owns the shape instead of hand-writing a twin. Business logic lives in pure functions, the shell that calls them stays thin, and transport and framework types stay out of the public surface.
+- **Get the data shape right before the logic.** Define the core types first, trace every access pattern, and pick the structure for the dominant one. Before two actors share state, ask what happens if one changes it under the other. If the answer is not "nothing", isolate it (see Idempotency).
+- **Keep reader load low.** It has two axes: layers between a question and its answer (the rule above removes the ones that only forward), and mutable state the reader must hold. Narrow its scope (returns over mutation, locals over fields, derive instead of sync) and name an invariant once, at the boundary. A new reader should say where X comes from and what can change it in under 30 seconds.
+
+`samstack:typescript` holds the TypeScript form of these.
 
 ## Standards
 
@@ -25,7 +34,11 @@ For the vocabulary of *how* to shape a module (depth, seam, adapter, leverage, l
   - Code you touch loses the comments that break this rule. A no-comments skill, if you have one, sweeps a whole diff.
 - File and path operations verify existence and permissions first.
 - Production code runs on real data and verifiable evidence: stubs, fallbacks and made-up data stay in verification loops.
-- **Idempotency**: favour code and commands safe to run twice. Where a solution isn't idempotent, say so explicitly and offer an idempotent alternative.
+- **Idempotency**: favour code and commands that converge to the right state however many times they run and wherever the last run stopped. Where a solution isn't idempotent, say so explicitly and offer an idempotent alternative.
+  - Derive each step from the state that exists, not from what the previous run meant to do: read the current state, compare it to the goal, apply only the difference.
+  - Whatever a run leaves behind (a lock, a temporary file, a half-written record, a claimed job) must be recognisable as stale by the next run, by evidence that holds wherever the last run stopped. Write to a temporary path and rename it into place.
+  - Concurrent writers: first give each its own file, key or branch and merge where the state is read, because two workers writing their own field of one `state.json` is still shared mutation. Serialise structurally (a lockfile, one writer, compare-and-swap) only when one shared target is a real invariant. Instructions are not concurrency control.
+  - The test: what if this runs twice, or the last run crashed at each possible point? If the answer depends on what was left behind, add a reconciliation step.
 
 ## Keep the codebase worth copying
 

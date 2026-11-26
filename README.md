@@ -1,6 +1,6 @@
 # samstack
 
-Coding principles for Claude Code, packaged as one plugin: stability, verification loops, git, security, code quality, parallel work, and reframing and sharpening a loose ask. Each skill states the principle, and its `lessons.md`, where it has one, holds the mistakes that taught it.
+Coding principles for Claude Code, packaged as one plugin: stability, verification loops, git, security, code quality, parallel work, writing, TypeScript, measuring, and reframing and sharpening a loose ask. Each skill states the principle, and its `lessons.md`, where it has one, holds the mistakes that taught it.
 
 The way of working behind it: a change is proven by running the real thing on made-up data, not by writing tests (`samstack:testing`); a PR merges once its pre-PR hook has passed, with no CI gate in front of it; a red `main` is reverted at once; a correction becomes a check, not a paragraph. Take what fits and cut what doesn't: the skills are plain Markdown.
 
@@ -31,6 +31,6 @@ To work on the skills, add the marketplace from your clone instead (`claude plug
 
 These are one developer's working rules, so some read as opinionated: an agent does the whole job without stopping to ask, and the checks that gate a change run on the author's machine before the PR. [CONTRIBUTING.md](CONTRIBUTING.md) says how to change them.
 
-`reframe` and `sharpen` are adapted from [pstack](https://github.com/cursor/plugins) by Lauren Tan (MIT, licence kept beside each skill). The repo layout follows [pstack-claude](https://github.com/michael-denyer/pstack-claude).
+`reframe`, `sharpen`, `writing`, `typescript` and `measuring` are adapted from [pstack](https://github.com/cursor/plugins) by Lauren Tan (MIT, licence kept beside each skill), and points from other pstack skills are folded into `code-quality`, `parallelism`, `stability` and `testing`. [NOTICE](NOTICE) lists each one. The repo layout follows [pstack-claude](https://github.com/michael-denyer/pstack-claude).
 
 MIT licensed: see [LICENSE](LICENSE) and [NOTICE](NOTICE).

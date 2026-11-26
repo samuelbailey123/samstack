@@ -26,6 +26,9 @@ A DNS, nameserver or registrar change reaches every client of the domain at once
 - **Config shared by N services changes on all N atomically**, with a coordinated redeploy. A secret rotated on one service of three is an outage that presents as something else.
 - **Diagnose before recycling.** A restart, kill or redeploy is a remedy after the root cause is named, never a first resort. Scope lifecycle commands to exact targets (PIDs filtered by age or parent, never a broad name pattern) and check what else matches first.
 - **Separate contention from capacity before scaling.** Look for starvation, lock contention and concurrency caps first; adding capacity to a contended system changes nothing.
+- **Find the one fact the change is safe because of, and run it.** A caller list is a grep away; the job is the breakage grep won't show. Most risky-looking changes are safe because of a single fact ("this call only drops cache entries that are already dead"). Prove that fact with a script that imports the library the app ships and calls the function you worry about, not with a writeup, which reads as convincing whether or not it is true.
+- **Say how sure you are**, and get each fact as far down this ladder as is cheap: you said so (worthless alone); you pointed at the line (a real `file:line`, or the dependency's own source); you walked the failure step by step and it never reaches; you ran a script that calls the real code and fails loud if you are wrong; you reproduced it in the running app. Write an unproven fact as unproven.
+- **Look where grep stops.** Read the source of what you call, its pinned version and any local patch. Work out when things run (microtasks, teardown, unmount). Follow what a symbol search misses: the JSON an API returns, a database column, a wire format another language reads, a feature flag, code three hops downstream.
 
 ## Runtime resilience
 
