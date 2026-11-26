@@ -4,12 +4,12 @@
     "name": "Samuel Bailey",
     "url": "https://github.com/samuelbailey123"
   },
-  "description": "Coding principles for Claude Code: stability, verification loops, git, security, code quality, parallel work, writing, TypeScript, measuring, and reframing and sharpening a loose ask.",
+  "description": "Coding principles for Claude Code: stability, verification loops and kits, git, security, code quality, parallel work, writing, TypeScript, measuring, and reframing and sharpening a loose ask.",
   "plugins": [
     {
       "name": "samstack",
       "source": "./plugins/samstack",
-      "description": "Coding principles for Claude Code: stability, verification loops, git, security, code quality, parallel work, writing, TypeScript, measuring, and reframing and sharpening a loose ask."
+      "description": "Coding principles for Claude Code: stability, verification loops and kits, git, security, code quality, parallel work, writing, TypeScript, measuring, and reframing and sharpening a loose ask."
     }
   ]
 }
