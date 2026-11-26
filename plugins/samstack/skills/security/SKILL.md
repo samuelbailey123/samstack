@@ -21,7 +21,7 @@ description: The security audit gate and its trigger surfaces. Use when a diff t
 
 ### How to satisfy it
 
-- **Size floor.** A diff under ~50 lines touching none of the surfaces above gets an inline self-review against this file, noted explicitly. A diff that changes a trigger surface gets an independent reviewer: a security-review subagent or command (a `security-auditor` agent, if you keep one). A substantial or cross-cutting change gets an adversarially-verified audit: multi-lens scan, then refute-by-default verification, not a rubber stamp.
+- **Size floor.** A diff under ~50 lines touching none of the surfaces above gets an inline self-review against this file, noted explicitly. A diff that changes a trigger surface gets an independent reviewer: a security-review subagent or command (a `security-auditor` agent, if you keep one). A substantial or cross-cutting change gets an adversarially-verified audit: multi-lens scan, then refute-by-default verification, not a rubber stamp. Call the Skill tool with "samstack:interrogate" for it: adversaries try to break the change, and only findings a run proves survive.
 - **Brief the auditor on designed behaviour** — what the system deliberately collects and stores — so intended behaviour isn't reported as a leak. A finding names concrete exposure; it does not re-litigate a design decision.
 - **A finding's proof is a verification loop** on a scratch home that shows the exposure before the fix and its absence after, with made-up data and throwaway keys (`samstack:testing`, "Core loops on a scratch home").
 - **Findings are fixed in the work that finds them.** Anything severe is fixed before anything else ships. The rest go into that same work's PRs, or are dropped: a finding is never filed for later.

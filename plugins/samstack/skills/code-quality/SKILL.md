@@ -11,7 +11,7 @@ description: "Standards for shipped code: types and data shape, error handling, 
 
 **Subtract before you add.** Delete dead paths, one-caller wrappers and adapters with no second implementation before building on top. Leave the code simpler than you found it.
 
-For the vocabulary of *how* to shape a module (depth, seam, adapter, leverage, locality), use a codebase-design skill if you have one.
+For the vocabulary of *how* to shape a module (depth, seam, adapter, leverage, locality), use a codebase-design skill if you have one. Before a build that adds a module, an interface or a schema, sketch the shape first: call the Skill tool with "samstack:architect".
 
 ## Types and shape
 

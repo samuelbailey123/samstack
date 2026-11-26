@@ -11,6 +11,11 @@ Adapted whole, each with its LICENSE beside it:
 - measuring, from pstack's benchmark-checklist and explain-the-number
 - verification-kit, from pstack's create-verification-skill and
   maintain-verification-skill
+- architect, arena, swarm, interrogate, ketchup and ketchup-video, each from
+  the pstack skill of the same name
+- figure-it-out, from pstack's figure-it-out and the decision log of its
+  show-me-your-work
+- statechart, from pstack's statechart, with its scripts and its render notes
 
 Adapted in part, as points rewritten into skills of samstack's own:
 

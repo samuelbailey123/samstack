@@ -14,6 +14,7 @@ Dispatch for **2+ genuinely independent units** — research, audits, sweeps, se
 - Briefs are **complete and self-contained**: a subagent cannot ask the user a question. Ambiguity comes back in its results rather than being guessed at.
 - Fan-out subagents write **disjoint files** and **never run git operations**. The orchestrator commits. A helper that owns a whole ask, on its own worktree and branch, runs its own git through to the merge.
 - Hand review work to a specialist when you keep one (for example a `security-auditor` or `code-reviewer` agent in `~/.claude/agents/`); otherwise brief a general subagent for it.
+- Three fan-out shapes have their own skills: `samstack:swarm` for a sweep or any coverage over many items, `samstack:arena` for several candidates at one artifact, and `samstack:interrogate` for adversaries that try to break a change. Each follows the rules here, and its workers' output lands in the PRs of the one piece of work it serves.
 
 Before fanning out, check that the brief is complete and that the tools the agent needs are actually available to it. Most subagent failures are an underspecified brief or a missing tool, not a flaky harness.
 
