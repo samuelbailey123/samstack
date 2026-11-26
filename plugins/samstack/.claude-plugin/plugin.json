@@ -1,0 +1,11 @@
+{
+  "name": "samstack",
+  "description": "Coding principles for Claude Code: stability, verification loops, git, security, code quality, parallel work, and reframing and sharpening a loose ask.",
+  "author": {
+    "name": "Samuel Bailey",
+    "url": "https://github.com/samuelbailey123"
+  },
+  "homepage": "https://github.com/samuelbailey123/samstack",
+  "repository": "https://github.com/samuelbailey123/samstack",
+  "license": "MIT"
+}

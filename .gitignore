@@ -1,0 +1,13 @@
+.DS_Store
+*.bak-*
+*.tmp
+*.log
+**/__pycache__/
+**/.venv/
+**/node_modules/
+.env
+.env.*
+.claude/
+.scratch/
+*-plan.md
+*-brainstorm.md

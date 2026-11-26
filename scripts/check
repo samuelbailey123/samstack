@@ -1,0 +1,77 @@
+#!/usr/bin/env -S python3 -I
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SKILLS = ROOT / "plugins" / "samstack" / "skills"
+LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)]*)?\)")
+WIKI = re.compile(r"\[\[([a-z0-9]+(?:-[a-z0-9]+)+)\]\]")
+FULL_STOP = re.compile(r"[.!?][\"'*)`]*$")
+problems = []
+
+
+def frontmatter(text):
+    lines = text.split("\n")
+    if lines[0] != "---" or "---" not in lines[1:]:
+        return None
+    return lines[1 : lines.index("---", 1)]
+
+
+for skill in sorted(p for p in SKILLS.iterdir() if p.is_dir()):
+    md = skill / "SKILL.md"
+    if not md.is_file():
+        problems.append(f"{skill.name}: no SKILL.md")
+        continue
+    head = frontmatter(md.read_text())
+    if head is None:
+        problems.append(f"{skill.name}/SKILL.md: no --- frontmatter block")
+        continue
+    fields = dict(l.split(":", 1) for l in head if re.match(r"^[a-z-]+:", l))
+    if fields.get("name", "").strip() != skill.name:
+        problems.append(f"{skill.name}/SKILL.md: name must be {skill.name!r}, the folder's name")
+    if not fields.get("description", "").strip():
+        problems.append(f"{skill.name}/SKILL.md: description is empty")
+
+for md in sorted(SKILLS.rglob("*.md")):
+    for n, line in enumerate(md.read_text().split("\n"), 1):
+        if "~/.claude/skills/" in line:
+            problems.append(
+                f"{md.relative_to(ROOT)}:{n}: points into ~/.claude/skills/, which nobody else has;"
+                " link a samstack sibling relatively instead, e.g. [lessons.md](../stability/lessons.md)"
+            )
+        for slug in WIKI.findall(line):
+            problems.append(
+                f"{md.relative_to(ROOT)}:{n}: [[{slug}]] names a memory note nobody else has;"
+                " say the point in plain words, or link a samstack file relatively"
+            )
+        if md.name == "lessons.md" and line.startswith("- **") and not FULL_STOP.search(line.rstrip()):
+            problems.append(
+                f"{md.relative_to(ROOT)}:{n}: lesson stops mid-sentence;"
+                " finish its last sentence from the lesson's source, or cut it back to the last full one"
+            )
+    for target in LINK.findall(md.read_text()):
+        if re.match(r"^[a-z]+:", target):
+            continue
+        if not (md.parent / target).exists():
+            problems.append(f"{md.relative_to(ROOT)}: link to {target} points at nothing")
+
+for path in (".", "plugins/samstack"):
+    run = subprocess.run(["claude", "plugin", "validate", path], cwd=ROOT, capture_output=True, text=True)
+    if run.returncode != 0:
+        problems.append(f"claude plugin validate {path} failed:\n{run.stdout}{run.stderr}")
+
+for scan in (["dir", str(ROOT)], ["git", str(ROOT)]):
+    leaks = subprocess.run(
+        ["gitleaks", *scan, "--no-banner", "--redact", "--exit-code", "1"],
+        capture_output=True,
+        text=True,
+    )
+    if leaks.returncode != 0:
+        problems.append(f"gitleaks {scan[0]} found a possible secret:\n{leaks.stdout}{leaks.stderr}")
+
+if problems:
+    print("\n".join(problems))
+    sys.exit(1)
+print(f"check: {sum(1 for p in SKILLS.iterdir() if p.is_dir())} skills ok")

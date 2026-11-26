@@ -1,0 +1,194 @@
+#!/usr/bin/env -S python3 -I
+"""Gate before this repo is published: no private names anywhere a clone can read.
+
+Scans, in this order: every file the repo would ship (tracked and untracked but not
+ignored, this script included), then every commit on every branch and tag (added lines,
+merge resolutions, file names, messages and author and committer addresses), then every
+tag's name, message and tagger. A binary file in history is a hit, as its contents are
+never read.
+
+The patterns come in two sets. The generic ones below hold nothing private. The
+private ones (names of drives, clients, machines, employers) live outside the repo in
+$SAMSTACK_PUBLIC_CHECK_PATTERNS, default ~/.config/samstack/public-check-patterns: one
+`label<TAB>regex<TAB>sample` per line, `#` for comments. Without that file the check
+refuses to run; --generic-only runs the generic set alone and says so.
+
+Exit 0: clean. Exit 1: hits to clear. Exit 2: could not run.
+"""
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+PATTERNS_FILE = Path(
+    os.environ.get("SAMSTACK_PUBLIC_CHECK_PATTERNS") or Path.home() / ".config/samstack/public-check-patterns"
+)
+NOREPLY = re.compile(r"(@users\.noreply\.github\.com|^noreply@github\.com)$")
+HARMLESS_EMAIL = re.compile(r"(@users\.noreply\.github\.com|^noreply@github\.com|^git@github\.com|@example\.(com|org|net))$")
+
+# Samples are built in pieces so this file does not match its own patterns.
+GENERIC = {
+    "home path": (r"/Users/[A-Za-z]", "/Users/" + "someone"),
+    "home code path": (r"~/co[d]e/", "~/" + "code/repo"),
+    "tailnet address": (
+        r"\b100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]+\.[0-9]+\b",
+        "100." + "101.2.3",
+    ),
+    "email address": (r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}", "someone" + "@" + "gmail.com"),
+}
+
+
+def fail(message):
+    print(f"public-check could not run: {message}", file=sys.stderr)
+    sys.exit(2)
+
+
+def git(*args):
+    run = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, errors="replace")
+    if run.returncode != 0:
+        fail(f"git {' '.join(args)}: {run.stderr.strip()}")
+    return run.stdout
+
+
+def load_patterns(generic_only):
+    table = dict(GENERIC)
+    if generic_only:
+        print("public-check: --generic-only, the private patterns did NOT run", file=sys.stderr)
+    elif not PATTERNS_FILE.is_file():
+        fail(
+            f"no private patterns at {PATTERNS_FILE}. Create it (label<TAB>regex<TAB>sample per line,"
+            " set SAMSTACK_PUBLIC_CHECK_PATTERNS to put it elsewhere), or pass --generic-only"
+        )
+    else:
+        for n, raw in enumerate(PATTERNS_FILE.read_text().split("\n"), 1):
+            if not raw.strip() or raw.startswith("#"):
+                continue
+            parts = raw.split("\t")
+            if len(parts) != 3 or not all(parts):
+                fail(f"{PATTERNS_FILE}:{n}: want label<TAB>regex<TAB>sample")
+            if parts[0] in table:
+                fail(f"{PATTERNS_FILE}:{n}: label {parts[0]!r} is already taken")
+            table[parts[0]] = (parts[1], parts[2])
+    compiled = {}
+    for label, (pattern, sample) in table.items():
+        try:
+            regex = re.compile(pattern)
+        except re.error as error:
+            fail(f"pattern {label!r} does not compile: {error}")
+        if not regex.search(sample):
+            fail(f"pattern {label!r} no longer matches its own sample")
+        compiled[label] = regex
+    return compiled
+
+
+def labels_in(text, compiled):
+    found = []
+    for label, regex in compiled.items():
+        for match in regex.finditer(text):
+            if label == "email address" and HARMLESS_EMAIL.search(match.group(0)):
+                continue
+            found.append(label)
+            break
+    return found
+
+
+def scan_tree(compiled, hits):
+    names = git("ls-files", "-z", "--cached", "--others", "--exclude-standard").split("\0")
+    files = [ROOT / name for name in names if name]
+    if not any(p.name == "SKILL.md" for p in files):
+        fail(f"found no SKILL.md under {ROOT}")
+    if not any(p.resolve() == Path(__file__).resolve() for p in files):
+        fail("this script is not among the files the repo would ship, so it would go unscanned")
+    for path in files:
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(errors="replace")
+        except OSError as error:
+            fail(f"{path}: {error}")
+        shown = str(path.relative_to(ROOT))
+        for label in labels_in(shown, compiled):
+            hits.add(f"{shown}: {label} in the file name")
+        for n, line in enumerate(text.split("\n"), 1):
+            for label in labels_in(line, compiled):
+                hits.add(f"{shown}:{n}: {label}")
+
+
+def scan_history(compiled, hits):
+    commits = git("rev-list", "--all").split()
+    if not commits:
+        fail("no commits to scan")
+    people = git("log", "--all", "--format=%h %an <%ae> %cn <%ce>").split("\n")
+    for line in people:
+        if not line:
+            continue
+        short = line.split()[0]
+        for address in re.findall(r"<([^>]*)>", line):
+            if not NOREPLY.search(address):
+                hits.add(f"commit {short}: author or committer address is not a noreply address")
+        for label in labels_in(line.split(" ", 1)[1], compiled):
+            if label != "email address":
+                hits.add(f"commit {short}: {label} in the author or committer")
+    messages = git("log", "--all", "--format=%x1e%h%n%B").split("\x1e")
+    for entry in messages:
+        if not entry.strip():
+            continue
+        short, _, body = entry.partition("\n")
+        for n, line in enumerate(body.split("\n"), 1):
+            for label in labels_in(line, compiled):
+                hits.add(f"commit {short}: {label} in the message, line {n}")
+    current, path = "", "?"
+    for line in git("log", "--all", "-m", "-p", "--no-color", "--format=commit %h").split("\n"):
+        if line.startswith("commit "):
+            current = line.split()[1]
+            continue
+        if line.startswith("diff --git"):
+            path = line.split(" b/", 1)[-1]
+            for label in labels_in(path, compiled):
+                hits.add(f"commit {current}: {label} in the file name {path}")
+            continue
+        if line.startswith("Binary files "):
+            hits.add(f"commit {current}: {path}: binary file, its contents are not read")
+            continue
+        if line.startswith("+") and not line.startswith("+++"):
+            for label in labels_in(line[1:], compiled):
+                hits.add(f"commit {current}: {path}: {label} in an added line")
+
+
+def scan_tags(compiled, hits):
+    fields = "%(refname)%1f%(taggername)%1f%(taggeremail)%1f%(contents)%1e"
+    for entry in git("for-each-ref", f"--format={fields}", "refs/tags").split("\x1e"):
+        if not entry.strip():
+            continue
+        ref, name, email, body = (entry.lstrip("\n").split("\x1f") + ["", "", ""])[:4]
+        for label in labels_in(ref, compiled):
+            hits.add(f"tag {ref}: {label} in the tag name")
+        if email and not NOREPLY.search(email.strip("<>")):
+            hits.add(f"tag {ref}: tagger address is not a noreply address")
+        for text in (name, body):
+            for n, line in enumerate(text.split("\n"), 1):
+                for label in labels_in(line, compiled):
+                    hits.add(f"tag {ref}: {label} in the tagger or message, line {n}")
+
+
+def main():
+    generic_only = "--generic-only" in sys.argv[1:]
+    if [a for a in sys.argv[1:] if a != "--generic-only"]:
+        fail("only --generic-only is an option")
+    compiled = load_patterns(generic_only)
+    hits = set()
+    scan_tree(compiled, hits)
+    scan_history(compiled, hits)
+    scan_tags(compiled, hits)
+    print("\n".join(sorted(hits)))
+    print(
+        f"public-check: {len(hits)} to clear before the repo is public"
+        f" ({len(compiled)} patterns, every file, {len(git('rev-list', '--all').split())} commits)",
+        file=sys.stderr,
+    )
+    sys.exit(1 if hits else 0)
+
+
+main()
